@@ -30,7 +30,7 @@ def imread(path):
     Read image using its path.
     Default value is gray-scale, and image is read by YCbCr format as the paper said.
     """
-    return cv2.imread(path, cv2.IMREAD_GRAYSCALE).astype('float')
+    return cv2.imread(path, cv2.IMREAD_GRAYSCALE).astype('float32')
 
 def scale_image(img, factor=2.0):
     return ndimage.interpolation.zoom(img, factor, prefilter=False)
