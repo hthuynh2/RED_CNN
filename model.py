@@ -11,7 +11,7 @@ evaluate_dir = './evals'
 class RED_CNN(object):
     def __init__(self, num_kernel_per_layer=96, num_kernel_last_layer=1, kernel_size=(5, 5), lr=0.0001):
         self.total_num_epoch_to_train = 10000
-        self.save_every_num_epoch = 1
+        self.save_every_num_epoch = 5
         self.batch_size = 128
 
         self.num_kernel_per_layer = num_kernel_per_layer
@@ -47,6 +47,7 @@ class RED_CNN(object):
             os.mkdir(evaluate_dir)
 
     def train(self, train_data, train_labels, test_noisy_image):
+        print("Start training...")
         self.load_model()
         eval_data = train_data[0:2]
         eval_labels = train_labels[0:2]
@@ -58,6 +59,7 @@ class RED_CNN(object):
                            shuffle=True,
                            validation_data=(eval_data, eval_labels))
             self.current_epoch += self.save_every_num_epoch
+            self.model.summary()
             self.save_model()
             self.eval(noisy_img=test_noisy_image, save_name='img_4003')
 
@@ -92,6 +94,7 @@ class RED_CNN(object):
         self.current_epoch = max_checkpoint_num
 
     def save_model(self):
+        print("[*] Saving checkpoint... " + str(self.current_epoch))
         file_name = "checkpoint_" + format(self.current_epoch, "07") + ".h5"
         save_path = os.path.join(checkpoints_dir, file_name)
         self.model.save(save_path)
