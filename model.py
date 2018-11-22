@@ -1,10 +1,13 @@
-from keras import Input, layers, models, losses, optimizers, initializers, activations
+from keras import Input, layers, models, losses, optimizers, initializers, activations, callbacks
 import os
 import numpy as np
 from PIL import Image
+import utils
 
 PATCH_SIZE = 55
-checkpoints_dir = './checkpoints'
+checkpoints_dir = os.path.join(os.getcwd(), "checkpoints")
+checkpoint_best_path = os.path.join(checkpoints_dir, 'best_weights.hdf5')
+checkpoint_last_path = os.path.join(checkpoints_dir, 'last_weights.hdf5')
 outputs_dir = './outputs'
 evaluate_dir = './evals'
 
@@ -12,7 +15,6 @@ class RED_CNN(object):
     def __init__(self, num_kernel_per_layer=96, num_kernel_last_layer=1, kernel_size=(5, 5), lr=0.0001):
         print("Initializing model...")
         self.total_num_epoch_to_train = 10000
-        self.save_every_num_epoch = 5
         self.batch_size = 128
 
         self.num_kernel_per_layer = num_kernel_per_layer
@@ -41,65 +43,79 @@ class RED_CNN(object):
         output = layers.Activation(activation='relu')(y0_add_y9_deconv)
 
         self.model = models.Model(y_0, output)
-        optimizer = optimizers.Adam(lr=lr, beta_1=0.9, beta_2=0.999, epsilon=None, decay=1e-6, amsgrad=False)
+        optimizer = optimizers.Adam(lr=lr)
         self.model.compile(loss=losses.mean_squared_error, optimizer=optimizer)
         self.current_epoch = 0
         if not os.path.exists(evaluate_dir):
             os.mkdir(evaluate_dir)
 
-    def train(self, train_data, train_labels, test_noisy_image):
+    def train(self, train_data, train_labels):
         print("Start training...")
-        self.load_model()
-        eval_data = train_data[0:2]
-        eval_labels = train_labels[0:2]
+        self.load_last_model()
 
-        while self.current_epoch < self.total_num_epoch_to_train:
-            self.model.fit(x=train_data, y=train_labels,
-                           epochs=self.save_every_num_epoch,
-                           batch_size=self.batch_size,
-                           shuffle=True,
-                           validation_data=(eval_data, eval_labels))
-            self.current_epoch += self.save_every_num_epoch
-            self.model.summary()
-            self.save_model()
-            self.eval(noisy_img=test_noisy_image, save_name='img_4003')
+        learning_rate_update_callback = callbacks.LearningRateScheduler(step_decay, verbose=1)
+        checkpoint_last_callback = callbacks.ModelCheckpoint(checkpoint_last_path, verbose=1)
+        checkpoint_best_only_callback = callbacks.ModelCheckpoint(checkpoint_best_path, verbose=1, save_best_only=True)
 
-    def eval(self, noisy_img, save_name, clean_img=None):
-        prediction = self.model.predict(np.array([noisy_img]))[0]
-        prediction = prediction * 255
-        prediction = prediction.astype('uint8').reshape((128, 128))
-        predicted_img = Image.fromarray(prediction)
-        save_name += "_" + str(self.current_epoch) + '.png'
-        save_path = os.path.join(evaluate_dir, save_name)
-        predicted_img.save(save_path)
+        my_prediction_callback = My_prediction_callback()
+        callbacks_list = [checkpoint_last_callback, checkpoint_best_only_callback, my_prediction_callback, learning_rate_update_callback]
+        self.model.fit(x=train_data, y=train_labels,
+                       epochs=self.total_num_epoch_to_train,
+                       batch_size=self.batch_size,
+                       shuffle=True,
+                       validation_split=0.1,
+                       callbacks=callbacks_list)
 
-    def load_model(self):
+    # def eval(self, noisy_img, save_name, clean_img=None):
+    #     prediction = self.model.predict(np.array([noisy_img]))[0]
+    #     prediction = prediction * 255
+    #     prediction = prediction.astype('uint8').reshape((128, 128))
+    #     predicted_img = Image.fromarray(prediction)
+    #     save_name += "_" + str(self.current_epoch) + '.png'
+    #     save_path = os.path.join(evaluate_dir, save_name)
+    #     predicted_img.save(save_path)
+
+    def load_last_model(self):
         print("[*] Reading checkpoint...")
         if not os.path.exists(checkpoints_dir):
             os.mkdir(checkpoints_dir)
             print("No checkpoint found.")
             return
-        files = os.listdir(checkpoints_dir)
-        max_checkpoint_num = -1
 
-        for file_name in files:
-            checkpoint_num = int(file_name.split('_')[1].split('.')[0])
-            max_checkpoint_num = max(max_checkpoint_num, checkpoint_num)
-
-        if max_checkpoint_num == -1:
+        if not os.path.exists(checkpoint_last_path):
             print("No checkpoint found.")
             return
-        file_name = "checkpoint_" + format(max_checkpoint_num, "07") + ".h5"
-        latest_checkpoint_path = os.path.join(checkpoints_dir, file_name)
-        self.model.load_weights(latest_checkpoint_path)
-        self.current_epoch = max_checkpoint_num
+        self.model.load_weights(checkpoint_last_path)
+        print("Load checkpoint successfully.")
 
-    def save_model(self):
-        print("[*] Saving checkpoint... " + str(self.current_epoch))
-        file_name = "checkpoint_" + format(self.current_epoch, "07") + ".h5"
-        save_path = os.path.join(checkpoints_dir, file_name)
-        self.model.save(save_path)
+    # def save_model(self):
+    #     print("[*] Saving checkpoint... " + str(self.current_epoch))
+    #     file_name = "checkpoint_" + format(self.current_epoch, "07") + ".h5"
+    #     save_path = os.path.join(checkpoints_dir, file_name)
+    #     self.model.save(save_path)
 
 
+def step_decay(epoch):
+   initial_lrate = 0.0001
+   drop = 0.75
+   epochs_drop = 10.0
+   lrate = initial_lrate * np.power(drop,
+           np.floor((1+epoch)/epochs_drop))
+   lrate = max(lrate, 0.00001)
+   return lrate
 
-
+class My_prediction_callback(callbacks.Callback):
+    def __init__(self):
+        test_noisy_image = utils.imread(utils.get_image_path(False, 64, 4003))
+        test_noisy_image = utils.scale_image(test_noisy_image, 2.0)  # Image size 128x128
+        test_noisy_image /= 255.0
+        test_noisy_image = test_noisy_image.reshape(128, 128, 1)
+        self.noisy_img = test_noisy_image
+    def on_epoch_end(self, epoch, logs={}):
+        prediction = self.model.predict(np.array([self.noisy_img]))[0]
+        prediction = prediction * 255
+        prediction = prediction.astype('uint8').reshape((128, 128))
+        predicted_img = Image.fromarray(prediction)
+        save_name = "img_4003_" + str(epoch) + '.png'
+        save_path = os.path.join(evaluate_dir, save_name)
+        predicted_img.save(save_path)

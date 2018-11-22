@@ -8,7 +8,7 @@ data_dir = './data'
 
 def generate_patches():
     start_idx = 4000
-    end_idx = 18000
+    end_idx = 20000
     num_patch_per_image = 0
     print("Start generating patches...")
     for x in range(0, 128 - PATCH_SIZE, stride):
