@@ -6,21 +6,21 @@ PATCH_SIZE = 55
 stride = 12
 data_dir = './data'
 
-def generate_batches():
+def generate_patches():
     start_idx = 4000
-    end_idx = 19000
+    end_idx = 18000
     num_patch_per_image = 0
-
+    print("Start generating patches...")
     for x in range(0, 128 - PATCH_SIZE, stride):
         for y in range(0, 128 - PATCH_SIZE, stride):
             num_patch_per_image += 1
     total_num_patch = num_patch_per_image * (end_idx - start_idx)
+    print("Total number of patches " + str(total_num_patch))
     data = np.zeros((total_num_patch, PATCH_SIZE, PATCH_SIZE, 1))
     labels = np.zeros((total_num_patch, PATCH_SIZE, PATCH_SIZE, 1))
-    print("Total number of patches " + str(total_num_patch))
     cur_idx = 0
     for i in range(start_idx, end_idx):
-        if start_idx % 500:
+        if start_idx % 500 == 0:
             print("Processing image number " + str(start_idx) + "...")
         noisy_img = imread(get_image_path(False, 64, i)) # Image size 64x64
         noisy_img = scale_image(noisy_img, 2.0) # Image size 128x128
@@ -51,4 +51,4 @@ def generate_batches():
 
 
 if __name__ == '__main__':
-    generate_batches()
+    generate_patches()
