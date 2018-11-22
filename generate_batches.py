@@ -20,8 +20,8 @@ def generate_patches():
     labels = np.zeros((total_num_patch, PATCH_SIZE, PATCH_SIZE, 1))
     cur_idx = 0
     for i in range(start_idx, end_idx):
-        if start_idx % 500 == 0:
-            print("Processing image number " + str(start_idx) + "...")
+        if i % 500 == 0:
+            print("Processing image number " + str(i) + "...")
         noisy_img = imread(get_image_path(False, 64, i)) # Image size 64x64
         noisy_img = scale_image(noisy_img, 2.0) # Image size 128x128
         noisy_img /= 255.0
