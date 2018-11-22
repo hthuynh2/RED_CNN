@@ -2,6 +2,7 @@ import os
 import cv2
 import scipy
 import numpy as np
+from scipy import ndimage
 
 data_dir = './data'
 
@@ -29,10 +30,10 @@ def imread(path):
     Read image using its path.
     Default value is gray-scale, and image is read by YCbCr format as the paper said.
     """
-    return cv2.imread(path, cv2.IMREAD_GRAYSCALE).astype(float)
+    return cv2.imread(path, cv2.IMREAD_GRAYSCALE).astype('float')
 
 def scale_image(img, factor=2.0):
-    return scipy.ndimage.interpolation.zoom(img, factor, prefilter=False)
+    return ndimage.interpolation.zoom(img, factor, prefilter=False)
 
 def load_data():
     input_file = os.path.join(data_dir, 'inputs.npy')
