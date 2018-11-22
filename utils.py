@@ -6,24 +6,30 @@ from scipy import ndimage
 
 data_dir = './data'
 
+
 def get_image_path(is_test, s, num):
     assert (s == 128 or s == 64)
     # path = os.path.join('/Users/hthieu/PycharmProjects/CS446_Final_Project', "xray_images/")
-    path = os.path.join(os.getcwd(), "xray_images/")
+    path = os.path.join(os.getcwd(), "xray_images")
+    img_dir = ""
     image_name = ""
     if is_test:
-        path += 'test_images_'
+        img_dir += 'test_images_'
         image_name += 'test_'
     else:
-        path += 'train_images_'
+        img_dir += 'train_images_'
         image_name += 'train_'
     if s == 64:
-        path += '64x64'
+        img_dir += '64x64'
     elif s == 128:
-        path += '128x128'
+        img_dir += '128x128'
+
+    path = os.path.join(path, img_dir)
     num_str = format(num, "05")
     image_name += num_str + ".png"
-    return path+"/"+image_name
+    path = os.path.join(path, image_name)
+    return path
+
 
 def imread(path):
     """
