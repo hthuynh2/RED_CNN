@@ -10,6 +10,7 @@ evaluate_dir = './evals'
 
 class RED_CNN(object):
     def __init__(self, num_kernel_per_layer=96, num_kernel_last_layer=1, kernel_size=(5, 5), lr=0.0001):
+        print("Initializing model...")
         self.total_num_epoch_to_train = 10000
         self.save_every_num_epoch = 5
         self.batch_size = 128

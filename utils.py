@@ -36,6 +36,11 @@ def scale_image(img, factor=2.0):
     return ndimage.interpolation.zoom(img, factor, prefilter=False)
 
 def load_data():
+    print("Start loading data...")
     input_file = os.path.join(data_dir, 'inputs.npy')
     label_file = os.path.join(data_dir, 'labels.npy')
-    return np.load(input_file), np.load(label_file)
+    input_ = np.load(input_file)
+    print("Finished loading input...")
+    label_ = np.load(label_file)
+    print("Finished loading label...")
+    return input_, label_
