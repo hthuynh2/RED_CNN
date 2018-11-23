@@ -75,6 +75,38 @@ class RED_CNN(object):
     #     save_path = os.path.join(evaluate_dir, save_name)
     #     predicted_img.save(save_path)
 
+    def test(self):
+        saved_dir = os.path.join(os.getcwd(), "xray_images")
+        saved_dir = os.path.join(saved_dir, "test_images_128x128")
+        if not os.path.exists(saved_dir):
+            os.mkdir(saved_dir)
+        for i in range(1, 4000):
+            if os.path.exists(utils.get_image_path(True, 64, i)):
+                test_noisy_128 = utils.imread(utils.get_image_path(True, 64, i))
+                test_noisy_128 = utils.scale_image(test_noisy_128, 2.0)  # Image size 128x128
+                test_noisy_128 /= 255.0
+                test_noisy_128 = test_noisy_128.reshape(128, 128, 1)
+
+                prediction = self.model.predict(np.array([test_noisy_128]))[0]
+                prediction = prediction * 255
+                prediction = prediction.astype('uint8').reshape((128, 128))
+                predicted_img = Image.fromarray(prediction)
+                clean_image_path = utils.get_image_path(True, 128, i)
+                predicted_img.save(clean_image_path)
+
+    def load_best_model(self):
+        print("[*] Reading checkpoint...")
+        if not os.path.exists(checkpoints_dir):
+            os.mkdir(checkpoints_dir)
+            print("No checkpoint found.")
+            return
+
+        if not os.path.exists(checkpoint_best_path):
+            print("No checkpoint found.")
+            return
+        self.model.load_weights(checkpoint_best_path)
+        print("Load checkpoint successfully.")
+
     def load_last_model(self):
         print("[*] Reading checkpoint...")
         if not os.path.exists(checkpoints_dir):
