@@ -96,7 +96,7 @@ class RED_CNN(object):
 
 
 def step_decay(epoch):
-   initial_lrate = 0.0001
+   initial_lrate = 0.0005
    drop = 0.75
    epochs_drop = 10.0
    lrate = initial_lrate * np.power(drop,
@@ -110,12 +110,27 @@ class My_prediction_callback(callbacks.Callback):
         test_noisy_image = utils.scale_image(test_noisy_image, 2.0)  # Image size 128x128
         test_noisy_image /= 255.0
         test_noisy_image = test_noisy_image.reshape(128, 128, 1)
-        self.noisy_img = test_noisy_image
+        self.noisy_img1 = test_noisy_image
+
+        test_noisy_image = utils.imread(utils.get_image_path(False, 64, 19983))
+        test_noisy_image = utils.scale_image(test_noisy_image, 2.0)  # Image size 128x128
+        test_noisy_image /= 255.0
+        test_noisy_image = test_noisy_image.reshape(128, 128, 1)
+        self.noisy_img2 = test_noisy_image
+
     def on_epoch_end(self, epoch, logs={}):
-        prediction = self.model.predict(np.array([self.noisy_img]))[0]
+        prediction = self.model.predict(np.array([self.noisy_img1]))[0]
         prediction = prediction * 255
         prediction = prediction.astype('uint8').reshape((128, 128))
         predicted_img = Image.fromarray(prediction)
         save_name = "img_4003_" + str(epoch) + '.png'
+        save_path = os.path.join(evaluate_dir, save_name)
+        predicted_img.save(save_path)
+
+        prediction = self.model.predict(np.array([self.noisy_img2]))[0]
+        prediction = prediction * 255
+        prediction = prediction.astype('uint8').reshape((128, 128))
+        predicted_img = Image.fromarray(prediction)
+        save_name = "img_19983_" + str(epoch) + '.png'
         save_path = os.path.join(evaluate_dir, save_name)
         predicted_img.save(save_path)
