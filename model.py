@@ -76,6 +76,7 @@ class RED_CNN(object):
     #     predicted_img.save(save_path)
 
     def test(self):
+        load_best_model()
         saved_dir = os.path.join(os.getcwd(), "xray_images")
         saved_dir = os.path.join(saved_dir, "test_images_128x128")
         if not os.path.exists(saved_dir):
