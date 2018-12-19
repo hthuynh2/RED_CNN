@@ -1,7 +1,7 @@
 import model
 from utils import get_image_path, scale_image, imread, load_data
 
-IS_TRAINING = False
+IS_TRAINING = True
 def main():
     if IS_TRAINING:
         data, labels = load_data()
