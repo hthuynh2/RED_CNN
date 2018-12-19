@@ -63,7 +63,7 @@ class RED_CNN(object):
                        epochs=self.total_num_epoch_to_train,
                        batch_size=self.batch_size,
                        shuffle=True,
-                       validation_split=0.1,
+                       validation_split=0.0,
                        callbacks=callbacks_list)
 
     # def eval(self, noisy_img, save_name, clean_img=None):
@@ -76,7 +76,7 @@ class RED_CNN(object):
     #     predicted_img.save(save_path)
 
     def test(self):
-        load_best_model()
+        self.load_best_model()
         saved_dir = os.path.join(os.getcwd(), "xray_images")
         saved_dir = os.path.join(saved_dir, "test_images_128x128")
         if not os.path.exists(saved_dir):
@@ -131,7 +131,7 @@ class RED_CNN(object):
 def step_decay(epoch):
    initial_lrate = 0.0005
    drop = 0.75
-   epochs_drop = 10.0
+   epochs_drop = 3.0
    lrate = initial_lrate * np.power(drop,
            np.floor((1+epoch)/epochs_drop))
    lrate = max(lrate, 0.00001)
